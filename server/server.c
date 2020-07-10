@@ -6,15 +6,18 @@
  ************************************************************************/
 
 #include "head.h"
+void *sub_reactor(int *arg);
 char *conf = "./footballd.conf";
 struct Bpoint ball;//球的位置
-struct ballStatus ball_status;//球的状态
 struct Map court;//足球场正式场地
 struct Score score;
 struct BallStatus ball_status;
 int repollfd,bepollfd;//从反应堆 sub reactor
 struct User *rteam,*bteam;
 int port = 0;
+pthread_mutex_t rmutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t bmutex = PTHREAD_MUTEX_INITIALIZER;
+
 int main(int argc, char **argv) {
     int opt,listener,epollfd;
     pthread_t red_t,blue_t;
@@ -39,7 +42,7 @@ int main(int argc, char **argv) {
     court.start.y = 3;
 
     ball.x=court.width / 2;
-    ball.y = court.length / 2;
+    ball.y = court.height / 2;
     
     bzero(&ball_status,sizeof(ball_status));
     ball_status.who = -1;
@@ -50,16 +53,15 @@ int main(int argc, char **argv) {
         exit(1);
     }
     DBG(GREEN"INFO"NONE" : Server start On port %d.\n",port);
-    eopllfd = epoll_create(MAX * 2);
     
-    rteam = (sturct User *)calloc(MAX,sizeof(struct User));
-    bteam = (sturct User *)calloc(MAX,sizeof(struct User));
+    rteam = (struct User *)calloc(MAX,sizeof(struct User));
+    bteam = (struct User *)calloc(MAX,sizeof(struct User));
 
     epollfd = epoll_create(MAX * 2);
-    reopllfd = epoll_create(MAX);
-    beopllfd = epoll_create(MAX);
+    repollfd = epoll_create(MAX);
+    bepollfd = epoll_create(MAX);
 
-    if(epollfd < 0 || repollfd < 0 ||beopllfd < 0 ) {
+    if(epollfd < 0 || repollfd < 0 ||bepollfd < 0 ) {
         perror("epoll_create()");
         exit(1);
     }
@@ -79,7 +81,7 @@ int main(int argc, char **argv) {
 
     if(epoll_ctl(epollfd, EPOLL_CTL_ADD, listener,&ev)< 0) {
         perror("epoll.ctl");
-        exit(0);
+        exit(1);
     }
 
     struct sockaddr_in client;
@@ -88,13 +90,14 @@ int main(int argc, char **argv) {
 
     while(1) {
         DBG(YELLOW"Main Reactor"NONE" : Waiting for client.\n");
-        int nfds = eopll_wait(epollfd, events, MAX * 2, -1);
+        int nfds = epoll_wait(epollfd, events, MAX * 2, -1);
         if(nfds < 0) {
             perror("epoll_wait()");
             exit(1);
         }
         for(int i = 0; i < nfds; i++) {
             struct User user;
+            bzero(&user,sizeof(user));
             char buff[512] = {0};
             if(events[i].data.fd==listener) {
                 //先只收数据

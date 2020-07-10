@@ -6,6 +6,7 @@
  ************************************************************************/
 
 #include "head.h"
+void *do_recv(void *arg);
     int server_port = 0;
     char server_ip[20] = {0};
     char name[20] = {0};
@@ -13,11 +14,7 @@
     char log_msg[512] = {0};
     char *conf= "./football.conf";
     int sockfd = -1;
-    void logout (int signum) {
-        struct ChatMsg msg;
-        msg.type = CHAT_FIN;
-        send(sockfd,)
-    }
+
     void logout(int signum){
         struct ChatMsg msg;
         msg.type = CHAT_FIN;
@@ -34,7 +31,7 @@ int main(int argc, char ** argv)
     struct LogResponse response;     //HERE
 
     bzero(&request,sizeof(request));
-    bzero(&reaponse,sizeof(response));
+    bzero(&response,sizeof(response));
     while ((opt = getopt(argc, argv, "h:p:t:m:n:")) != -1) {
         switch (opt) {
             case 't':
@@ -93,7 +90,7 @@ int main(int argc, char ** argv)
     tv.tv_usec = 0;
     rc = select(sockfd + 1, &rfds, NULL, NULL, &tv);
     if(rc == 0){
-        DBG(RED"Error"NONE"The game serer is out fo service!\n");
+        DBG(RED"Error"NONE"The game server is out fo service!\n");
         exit(1);
                             
     } else {
@@ -113,9 +110,10 @@ int main(int argc, char ** argv)
     if(connect(sockfd, (struct sockaddr*)&server, sizeof(server)) == -1){
         perror("connecting failed!\n");
         exit(1);
-                                
+                     
     }
-
+    pthread_t recv_t;
+    pthread_create(&recv_t, NULL, do_recv, NULL);
    /* char buff[512] = {0};
     sprintf(buff, "hello , hxd!");
     send(sockfd, buff, strlen(buff), 0);
@@ -126,12 +124,20 @@ int main(int argc, char ** argv)
                                                 
     }*/
     signal(SIGINT,logout);
+    struct ChatMsg msg;
     while(1) {
-        struct ChatMsg msg;
-        msg.typt = CHAT_WALL;
-        Printf(RED"Please Input: \n"NONE);
+        bzero(&msg, sizeof(msg));
+        msg.type = CHAT_WALL;
+        //struct ChatMsg msg;
+        //msg.typt = CHAT_WALL;
+        printf(RED"Please Input: \n"NONE);
         scanf("%[^\n]s",msg.msg);
         getchar();
+        if(strlen(msg.msg)) {
+            if(msg.msg[0] == '@') msg.type = CHAT_MSG;
+            if(msg.msg[0] == '#') msg.type = CHAT_FUNC;
+            send(sockfd,(void *)&msg,sizeof(msg),0);
+        }
         send(sockfd,(void *)&msg,sizeof(msg),0);
     }
     return 0;
