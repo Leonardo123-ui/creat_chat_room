@@ -5,19 +5,7 @@
 	> Created Time: Wed 08 Jul 2020 03:06:59 PM CST
  ************************************************************************/
 
-#include "head.h"/*
-int socket_udp(){
-        int fd;
-        
-    if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-                return -1;
-            
-    }
-        return fd;
-
-}
-char conf_ans[50];*/
-
+#include "head.h"
     int server_port = 0;
     char server_ip[20] = {0};
     char name[20] = {0};
@@ -30,7 +18,14 @@ char conf_ans[50];*/
         msg.type = CHAT_FIN;
         send(sockfd,)
     }
-
+    void logout(int signum){
+        struct ChatMsg msg;
+        msg.type = CHAT_FIN;
+        send(sockfd,(void *)&msg,sizeof(msg),0);
+        close(sockfd);
+        DBG(RED"Byeye!\n"NONE);
+        exit(1);
+    }
 int main(int argc, char ** argv) 
 {
     int opt;
@@ -130,9 +125,10 @@ int main(int argc, char ** argv)
         DBG(RED"Server Info"NONE" : %s\n", buff);
                                                 
     }*/
+    signal(SIGINT,logout);
     while(1) {
         struct ChatMsg msg;
-        msg.typt = Chat_WALL;
+        msg.typt = CHAT_WALL;
         Printf(RED"Please Input: \n"NONE);
         scanf("%[^\n]s",msg.msg);
         getchar();

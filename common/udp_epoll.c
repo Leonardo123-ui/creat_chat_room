@@ -41,9 +41,9 @@ extern int repollfd, bepollfd;
         team[sub] = *user;
         team[sub].online = 1;
         team[sub].flag = 10;
-        DBG(L_RED"sub = %d, name = %s", sub,team[i].name);
+        DBG(L_RED"sub = %d, name = %s", sub,team[sub].name);
         if (user->team){
-            add_event_ptr(bepollfd, team[sub].fd,EPOLLIN | EPOLLET, &team[sub]);
+            add_event_ptr(bepollfd, team[sub].fd,EPOLLIN | EPOLLET, &team[sub]);} else {
             add_event_ptr(repollfd, team[sub].fd,EPOLLIN | EPOLLET, &team[sub]);
         }
     }
@@ -95,15 +95,12 @@ int udp_accept(int fd, struct User *user) {
     }
     int check_online(struct LogRequest *request) {
         for(int i = 0; i<MAX;i++){
-            if(rteam)
+            if(rteam[i].online && !strcmp(request->name,rteam[i])) return 1;
+            
+            if(bteam[i].online && !strcmp(request->name,bteam[i])) return 1;
         }
+        return 0;
     }   
-       /* if (check_online(&request)) {
-        *         response.type = 1;
-        *                 strcpy(response.msg, "You are Already Login!");
-        *                         sendto(fd, (void *)&response, sizeof(response), 0, (struct sockaddr *)&client, len);
-        *                                 return -1;
-        *                                     }*/
 
     response.type = 0;
     strcpy(response.msg, "Login Success. Enjoy yourself!");
