@@ -7,7 +7,7 @@
 
 #include "head.h"
 
-(void *)sub_reactor(void *arg){
+void *sub_reactor(void *arg){
     struct task_queue *taskQueue = (struct task_queue *)arg;
     pthread_t *tid = (pthread_t *)calloc(NTHREAD, sizeof(pthread_t));
     for (int i = 0; i < NTHREAD; i++) {

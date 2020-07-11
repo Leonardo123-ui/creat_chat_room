@@ -12,9 +12,11 @@ extern int repollfd,bepollfd;
 
 void send_all(struct ChatMsg *msg) {
     for(int i = 0; i<MAX;i++){
-        if(bteam[i].online) send(bteam[i].fd,(void*)msg,sizeof(struct ChatMsg),0);
+        if(bteam[i].online) 
+            send(bteam[i].fd,(void*)msg,sizeof(struct ChatMsg),0);
     
-        if(rteam[i].online) send(rteam[i].fd,(void*)msg,sizeof(struct ChatMsg),0);
+        if(rteam[i].online) 
+            send(rteam[i].fd,(void*)msg,sizeof(struct ChatMsg),0);
     }
 }    
 void send_to(char *to,struct ChatMsg *msg,int fd){
@@ -27,9 +29,9 @@ void send_to(char *to,struct ChatMsg *msg,int fd){
         }
         if(bteam[i].online &&(!strcmp(to,bteam[i].name))){
 
-        send(bteam[i].fd,msg,sizeof(struct ChatMsg),0);
-        flag = 1;
-        break;
+            send(bteam[i].fd,msg,sizeof(struct ChatMsg),0);
+            flag = 1;
+            break;
         }
         if(!flag){
             memset(msg->msg,0,sizeof(msg->msg));
@@ -37,6 +39,7 @@ void send_to(char *to,struct ChatMsg *msg,int fd){
             msg->type = CHAT_SYS;
             send(fd,msg,sizeof(struct ChatMsg),0);
         }
+    }
 }
 void do_work(struct User *user)
 {   struct ChatMsg r_msg;
@@ -50,9 +53,9 @@ void do_work(struct User *user)
         send_all(&msg);
 
     }else if (msg.type &CHAT_MSG){
-     
+        char to[20]={0}; 
         printf("<%s>$ %s \n",user->name,msg.msg);
-        int i = 0;
+        int i = 1;
         for (;i<=21;i++){
             if(msg.msg[i] == ' ')break;
         }
@@ -90,22 +93,22 @@ void do_work(struct User *user)
 }
 
 void task_queue_init(struct task_queue *taskQueue, int sum, int epollfd) {
-        taskQueue->sum = sum;
-        taskQueue->epollfd = epollfd;
-        taskQueue->team = calloc(sum, sizeof(void *));
-        taskQueue->head = taskQueue->tail = 0;
-        pthread_mutex_init(&taskQueue->mutex, NULL);
-        pthread_cond_init(&taskQueue->cond, NULL);
+    taskQueue->sum = sum;
+    taskQueue->epollfd = epollfd;
+    taskQueue->team = calloc(sum, sizeof(void *));
+    taskQueue->head = taskQueue->tail = 0;
+    pthread_mutex_init(&taskQueue->mutex, NULL);
+    pthread_cond_init(&taskQueue->cond, NULL);
 
 }
 
 void task_queue_push(struct task_queue *taskQueue, struct User *user) {
-        pthread_mutex_lock(&taskQueue->mutex);
-        taskQueue->team[taskQueue->tail] = user;
-        DBG(L_GREEN"Thread Pool"NONE" : Task push %s\n", user->name);
+    pthread_mutex_lock(&taskQueue->mutex);
+    taskQueue->team[taskQueue->tail] = user;
+    DBG(L_GREEN"Thread Pool"NONE" : Task push %s\n", user->name);
     if (++taskQueue->tail == taskQueue->sum) {
-            DBG(L_GREEN"Thread Pool"NONE" : Task Queue End\n");
-            taskQueue->tail = 0;
+        DBG(L_GREEN"Thread Pool"NONE" : Task Queue End\n");
+        taskQueue->tail = 0;
             
     }
     pthread_cond_signal(&taskQueue->cond);

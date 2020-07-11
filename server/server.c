@@ -6,8 +6,9 @@
  ************************************************************************/
 
 #include "head.h"
-void *sub_reactor(int *arg);
+//void *sub_reactor(int *arg);
 char *conf = "./footballd.conf";
+
 struct Bpoint ball;//球的位置
 struct Map court;//足球场正式场地
 struct Score score;
@@ -34,7 +35,8 @@ int main(int argc, char **argv) {
     }
     //这里建议判断配置文件的合法性，避免段错误
 
-    if(!port) port = atoi(get_conf_value(conf,"PORT"));
+    if(!port) 
+        port = atoi(get_conf_value(conf,"PORT"));
     court.width = atoi(get_conf_value(conf, "COLS"));
     court.height = atoi(get_conf_value(conf, "LINES"));
 
